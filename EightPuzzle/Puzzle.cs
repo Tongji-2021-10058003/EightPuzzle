@@ -12,48 +12,35 @@ namespace EightPuzzle {
 		Right = 3
 	};
 	public class Puzzle {
-		public int RowCount, ColumnCount;
-		public int[][] State;
+		public int[,] State;
 		public (int Row, int Column) Slot {
 			get;
 			private set;
 		}
 		public Puzzle(Puzzle puzzle) {
-			RowCount = puzzle.RowCount;
-			ColumnCount = puzzle.ColumnCount;
-			State = new int[RowCount][];
-			for (int i = 0; i < State.Length; ++i) {
-				State[i] = new int[ColumnCount];
-				Array.Copy(puzzle.State[i], State[i], ColumnCount);
-			}
+			State = new int[puzzle.RowCount, puzzle.ColumnCount];
+			Array.Copy(puzzle.State, State, puzzle.State.Length);
 			Slot = puzzle.Slot;
 		}
 		public Puzzle(int row, int col) {
-			RowCount = row;
-			ColumnCount = col;
-			State = new int[row][];
-			for (int i = 0; i < row; ++i)
-				State[i] = new int[col];
+			State = new int[row, col];
 			Slot = (-1, -1);
 		}
-		public Puzzle(int[][] state) {
-			RowCount = state.Length;
-			ColumnCount = state[0].Length;
-			State = new int[RowCount][];
+		public Puzzle(int[,] state) {
+			State = new int[state.GetLength(0), state.GetLength(1)];
+			Array.Copy(state, State, state.Length);
 			Slot = (-1, -1);
-			for (int i = 0; i < RowCount; ++i) {
-				if (state[i].Length != ColumnCount)
-					throw new ArgumentException("Lengths of rows are not unified");
-				Array.Copy(state[i], State[i], state[i].Length);
-				if (Slot == (-1, -1))
-					for (int j = 0; j < ColumnCount; ++j)
-						if (state[i][j] <= 0)
-							Slot = (i, j);
-
-			}
+			for (int i = 0; i < RowCount && Slot == (-1, -1); ++i)
+				for (int j = 0; j < ColumnCount; ++j)
+					if (state[i, j] <= 0) {
+						Slot = (i, j);
+						break;
+					}
 			if (Slot == (-1, -1))
 				throw new ArgumentException("No empty slot provided");
 		}
+		public int RowCount { get => State.GetLength(0); }
+		public int ColumnCount { get => State.GetLength(1); }
 		public Puzzle Move(Direction dir) {
 			if ((Slot.Row == 0 && dir == Direction.Up) ||
 				(Slot.Row == RowCount - 1 && dir == Direction.Down) ||
@@ -69,18 +56,18 @@ namespace EightPuzzle {
 				_ => throw new NotImplementedException()
 			};
 			result.Slot = (Slot.Row + deltaRow, Slot.Column + deltaCol);
-			int temp = result.State[Slot.Row][Slot.Column];
-			result.State[Slot.Row][Slot.Column] = result.State[result.Slot.Row][result.Slot.Column];
-			result.State[result.Slot.Row][result.Slot.Column] = temp;
+			int temp = result.State[Slot.Row, Slot.Column];
+			result.State[Slot.Row, Slot.Column] = result.State[result.Slot.Row, result.Slot.Column];
+			result.State[result.Slot.Row, result.Slot.Column] = temp;
 			return result;
 		}
 		public int[] ToArray(bool containSlot = false) {
 			List<int> result = new List<int>();
 			for (int i = 0; i < RowCount; ++i)
 				for (int j = 0; j < ColumnCount; ++j) {
-					if (containSlot && Slot == (i, j))
+					if (!containSlot && Slot == (i, j))
 						continue;
-					result.Add(State[i][j]);
+					result.Add(State[i, j]);
 				}
 			return result.ToArray();
 		}
