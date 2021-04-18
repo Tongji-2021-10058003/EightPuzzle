@@ -41,13 +41,20 @@ namespace EightPuzzle {
 		}
 		public int RowCount { get => State.GetLength(0); }
 		public int ColumnCount { get => State.GetLength(1); }
-		public Puzzle Move(Direction dir) {
+		public int this[int row, int col] {
+			get => State[row, col];
+			set => State[row, col] = value;
+		}
+		public int this[(int row, int col) coordinate] {
+			get => State[coordinate.row, coordinate.col];
+			set => State[coordinate.row, coordinate.col] = value;
+		}
+		public Puzzle MoveSelf(Direction dir) {
 			if ((Slot.Row == 0 && dir == Direction.Up) ||
 				(Slot.Row == RowCount - 1 && dir == Direction.Down) ||
 				(Slot.Column == 0 && dir == Direction.Left) ||
 				(Slot.Column == ColumnCount - 1 && dir == Direction.Right))
 				throw new InvalidOperationException("Slot is on the border");
-			Puzzle result = new Puzzle(this);
 			(int deltaRow, int deltaCol) = dir switch {
 				Direction.Up => (-1, 0),
 				Direction.Down => (1, 0),
@@ -55,11 +62,15 @@ namespace EightPuzzle {
 				Direction.Right => (0, 1),
 				_ => throw new NotImplementedException()
 			};
-			result.Slot = (Slot.Row + deltaRow, Slot.Column + deltaCol);
-			int temp = result.State[Slot.Row, Slot.Column];
-			result.State[Slot.Row, Slot.Column] = result.State[result.Slot.Row, result.Slot.Column];
-			result.State[result.Slot.Row, result.Slot.Column] = temp;
-			return result;
+			int temp = this[Slot];
+			this[Slot] = State[Slot.Row + deltaRow, Slot.Column + deltaCol];
+			Slot = (Slot.Row + deltaRow, Slot.Column + deltaCol);
+			this[Slot] = temp;
+			return this;
+		}
+		public Puzzle Move(Direction dir) {
+			var result = new Puzzle(this);
+			return result.MoveSelf(dir);
 		}
 		public int[] ToArray(bool containSlot = false) {
 			List<int> result = new List<int>();
@@ -74,10 +85,12 @@ namespace EightPuzzle {
 	}
 	public static class PuzzleUtility {
 		private static int CountReversePairs(ArraySegment<int> seg, ref int[] temp) {
+			if (seg.Count == 1)
+				return 0;
 			int middle = seg.Count >> 1;
 			int ans = CountReversePairs(seg.Slice(0, middle), ref temp) + CountReversePairs(seg.Slice(middle), ref temp);
 			for (int i = 0, j = middle, k = 0; i < middle || j < seg.Count; ++k) {
-				if ((i < middle && seg[i] <= seg[j]) || j == seg.Count) {
+				if (j == seg.Count || (i < middle && seg[i] <= seg[j])) {
 					ans += j - middle;
 					temp[k] = seg[i++];
 				}
