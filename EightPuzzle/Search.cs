@@ -33,7 +33,7 @@ namespace EightPuzzle {
 		#region Methods
 		private void Update(ScoredNode node, Func<TState, ScoredNode> map, ScoreUpdater updateScore = null) {
 			foreach (var (next, cost) in Transform(node.State))
-				if (map(next) is var nextNode && nextNode.Source.Equals(node)) {
+				if (map(next) is var nextNode && nextNode.Parent.Equals(node)) {
 					if (((TCost)((dynamic)cost + node.Cost)).CompareTo(nextNode.Cost) == 0)
 						continue;
 					TCost newCost = (dynamic)cost + node.Cost;
@@ -77,39 +77,25 @@ namespace EightPuzzle {
 					break;
 			}
 			var dstNode = map(Destination);
-			for (ScoredNode node = dstNode; node != null; node = node.Source)
+			for (ScoredNode node = dstNode; node != null; node = node.Parent)
 				Path.Insert(0, node.State);
 			return dstNode.Cost;
 		}
 		#endregion
 
 		#region Classes
-		protected class Node : IEquatable<Node> {
-			public Node() {
+		protected class Node : TreeNodeBase<Node>, IEquatable<Node> {
+			public Node() : base() {
 				State = default;
 				Cost = default;
 			}
-			public Node(TState state, TCost cost = default, Node source = null) {
+			public Node(TState state, TCost cost = default, Node parent = null) : base(parent) {
 				State = state;
 				Cost = cost;
-				Source = source;
 			}
 			public bool Equals(Node other) => State.Equals(other.State);
-			public Node Source { get; set; } = null;
 			public TState State { get; set; }
 			public TCost Cost { get; set; }
-			public bool IsChildOf(Node node) {
-				var cur = Source;
-				while (cur != null && !cur.Equals(node) && !cur.Equals(this))
-					cur = cur.Source;
-				return node.Equals(cur);
-			}
-			public bool IsAncestorOf(Node node) {
-				if (node == null)
-					return false;
-				else
-					return node.IsChildOf(this);
-			}
 		}
 
 		protected class ScoredNode : Node, IComparable<ScoredNode> {
@@ -117,16 +103,16 @@ namespace EightPuzzle {
 				Score = default;
 				Comparer = comparer;
 			}
-			public ScoredNode(TState state, TCost cost = default, ScoredNode source = null, TCost score = default) {
+			public ScoredNode(TState state, TCost cost = default, ScoredNode parent = null, TCost score = default) {
 				State = state;
 				Cost = cost;
-				Source = source;
+				Parent = parent;
 				Score = score;
 			}
 			public ScoredNode(IComparer<ScoredNode> comparer, TState state, TCost cost = default, ScoredNode source = null, TCost score = default) : this(state, cost, source, score)
 				=> Comparer = comparer;
 			public int CompareTo(ScoredNode other) => Comparer == null ? Score.CompareTo(other.Score) : Comparer.Compare(this, other);
-			public new ScoredNode Source { get; set; } = null;
+			public new ScoredNode Parent { get; set; } = null;
 			public TCost Score { get; set; }
 			private IComparer<ScoredNode> Comparer { get; } = null;
 		}
