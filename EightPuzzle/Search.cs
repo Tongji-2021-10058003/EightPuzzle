@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Priority_Queue;
 
 namespace EightPuzzle {
 	public class Search<TState, TCost> where TState : class, IEquatable<TState> where TCost : IComparable<TCost> {
@@ -20,7 +21,6 @@ namespace EightPuzzle {
 
 		#region Delegates
 		public delegate IEnumerable<(TState Next, TCost Cost)> Transformer(TState state);
-		private delegate TCost ScoreUpdater(TCost oldScore, TCost oldCost, TCost newCost);
 		#endregion
 
 		#region Properties
@@ -31,55 +31,57 @@ namespace EightPuzzle {
 		#endregion
 
 		#region Methods
-		private void Update(ScoredNode node, Func<TState, ScoredNode> map, ScoreUpdater updateScore = null) {
-			foreach (var (next, cost) in Transform(node.State))
-				if (map(next) is var nextNode && nextNode.Parent.Equals(node)) {
-					if (((TCost)((dynamic)cost + node.Cost)).CompareTo(nextNode.Cost) == 0)
-						continue;
-					TCost newCost = (dynamic)cost + node.Cost;
-					if (updateScore != null)
-						nextNode.Score = updateScore(nextNode.Score, nextNode.Cost, newCost);
-					nextNode.Cost = newCost;
-					Update(nextNode, map, updateScore);
-				}
-		}
 		public TCost AStar(Func<TState, TState, TCost> estimate) {
 			Path.Clear();
 			var source = new ScoredNode(Source, default);
 			var visited = new HashSet<ScoredNode>(new NodeEqualityComparer()) { source };
-			var heap = new C5.IntervalHeap<ScoredNode> { source };
-			TCost updateScore(TCost oldScore, TCost oldCost, TCost newCost) => (dynamic)oldScore - oldCost + newCost;
-			ScoredNode map(TState state) {
-				visited.TryGetValue(new ScoredNode(state), out ScoredNode result);
-				return result;
-			}
-			while (!heap.IsEmpty) {
-				var node = heap.FindMin();
-				heap.DeleteMin();
+			var heap = new SimplePriorityQueue<ScoredNode, TCost>();
+			heap.Enqueue(source, source.Score);
+			while (heap.Count > 0) {
+				var node = heap.First;
+				heap.Dequeue();
 				foreach (var (next, cost) in Transform(node.State)) {
 					if (visited.TryGetValue(new ScoredNode(next), out ScoredNode nextNode)) {
 						TCost newCost = (dynamic)cost + node.Cost;
-						if (newCost.CompareTo(nextNode.Cost) >= 0 || nextNode.IsAncestorOf(node))
+						if (newCost.CompareTo(nextNode.Cost) >= 0)
 							continue;
+						else if (nextNode.IsAncestorOf(node))
+							throw new Exception("Negative cycle detected");
 						else {
+							nextNode.Parent = node;
 							nextNode.Score += (dynamic)newCost - nextNode.Cost;
+							if (heap.Contains(nextNode))
+								heap.UpdatePriority(nextNode, nextNode.Score);
 							nextNode.Cost = newCost;
-							Update(nextNode, map, updateScore);
+							Update(nextNode, ref visited, ref heap);
 						}
 					}
 					else {
 						nextNode = new ScoredNode(next, (dynamic)node.Cost + cost, node, estimate(next, Destination));
-						heap.Add(nextNode);
+						heap.Enqueue(nextNode, nextNode.Score);
 						visited.Add(nextNode);
 					}
 				}
 				if (visited.Contains(new ScoredNode(Destination)))
 					break;
 			}
-			var dstNode = map(Destination);
+			visited.TryGetValue(new ScoredNode(Destination), out ScoredNode dstNode);
 			for (ScoredNode node = dstNode; node != null; node = node.Parent)
 				Path.Insert(0, node.State);
 			return dstNode.Cost;
+		}
+		private void Update(ScoredNode node, ref HashSet<ScoredNode> visited, ref SimplePriorityQueue<ScoredNode, TCost> heap) {
+			foreach (var (next, cost) in Transform(node.State))
+				if (visited.TryGetValue(new ScoredNode(next), out ScoredNode nextNode) && nextNode.Parent.Equals(node)) {
+					TCost newCost = (dynamic)cost + node.Cost;
+					if (newCost.CompareTo(nextNode.Cost) >= 0)
+						continue;
+					nextNode.Score += (dynamic)newCost - nextNode.Cost;
+					if (heap.Contains(nextNode))
+						heap.UpdatePriority(nextNode, nextNode.Score);
+					nextNode.Cost = newCost;
+					Update(nextNode, ref visited, ref heap);
+				}
 		}
 		#endregion
 
