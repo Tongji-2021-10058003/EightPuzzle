@@ -21,17 +21,19 @@ namespace EightPuzzle {
 
 		#region Delegates
 		public delegate IEnumerable<(TState Next, TCost Cost)> Transformer(TState state);
+		public delegate TCost Evaluator(TState src, TState dst);
 		#endregion
 
 		#region Properties
 		public TState Source { get; set; }
 		public TState Destination { get; set; }
+		public Node SearchRoot { get; private set; }
 		public Transformer Transform { get; set; }
 		public List<TState> Path { get; }
 		#endregion
 
 		#region Methods
-		public TCost AStar(Func<TState, TState, TCost> estimate) {
+		public TCost AStar(Evaluator estimate) {
 			Path.Clear();
 			var source = new ScoredNode(Source, default);
 			var visited = new HashSet<ScoredNode>(new NodeEqualityComparer()) { source };
@@ -68,6 +70,7 @@ namespace EightPuzzle {
 			visited.TryGetValue(new ScoredNode(Destination), out ScoredNode dstNode);
 			for (ScoredNode node = dstNode; node != null; node = node.Parent)
 				Path.Insert(0, node.State);
+			SearchRoot = source;
 			return dstNode.Cost;
 		}
 		private void Update(ScoredNode node, ref HashSet<ScoredNode> visited, ref SimplePriorityQueue<ScoredNode, TCost> heap) {
@@ -86,7 +89,7 @@ namespace EightPuzzle {
 		#endregion
 
 		#region Classes
-		protected class Node : TreeNodeBase<Node>, IEquatable<Node> {
+		public class Node : TreeNodeBase<Node>, IEquatable<Node> {
 			public Node() : base() {
 				State = default;
 				Cost = default;
@@ -100,7 +103,7 @@ namespace EightPuzzle {
 			public TCost Cost { get; set; }
 		}
 
-		protected class ScoredNode : Node, IComparable<ScoredNode> {
+		public class ScoredNode : Node, IComparable<ScoredNode> {
 			public ScoredNode(IComparer<ScoredNode> comparer = null) : base() {
 				Score = default;
 				Comparer = comparer;
@@ -125,5 +128,8 @@ namespace EightPuzzle {
 		}
 		#endregion
 	}
-	public class Search<TState> : Search<TState, int> where TState : class, IEquatable<TState> { }
+	public class Search<TState> : Search<TState, int> where TState : class, IEquatable<TState> {
+		public Search() : base() { }
+		public Search(TState src, TState dst, Transformer transform) : base(src, dst, transform) { }
+	}
 }
