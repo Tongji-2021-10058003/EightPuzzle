@@ -11,12 +11,8 @@ namespace EightPuzzle {
 		Left = 2,
 		Right = 3
 	};
-	public class Puzzle {
+	public class Puzzle : IEquatable<Puzzle> {
 		public int[,] State;
-		public (int Row, int Column) Slot {
-			get;
-			private set;
-		}
 		public Puzzle(Puzzle puzzle) {
 			State = new int[puzzle.RowCount, puzzle.ColumnCount];
 			Array.Copy(puzzle.State, State, puzzle.State.Length);
@@ -38,6 +34,26 @@ namespace EightPuzzle {
 					}
 			if (Slot == (-1, -1))
 				throw new ArgumentException("No empty slot provided");
+		}
+		public bool Equals(Puzzle other) {
+			if (RowCount != other.RowCount || ColumnCount != other.ColumnCount)
+				return false;
+			else if (Slot != other.Slot)
+				return false;
+			else {
+				bool equal = true;
+				for (int i = 0; equal && i < RowCount; ++i)
+					for (int j = 0; j < ColumnCount; ++j)
+						if (State[i, j] != other.State[i, j]) {
+							equal = false;
+							break;
+						}
+				return equal;
+			}
+		}
+		public (int Row, int Column) Slot {
+			get;
+			private set;
 		}
 		public int RowCount { get => State.GetLength(0); }
 		public int ColumnCount { get => State.GetLength(1); }
@@ -81,6 +97,16 @@ namespace EightPuzzle {
 					result.Add(State[i, j]);
 				}
 			return result.ToArray();
+		}
+		public override string ToString() {
+			var result = new StringBuilder();
+			int width = (int)Math.Floor(Math.Log10(State.Cast<int>().Max())) + 1;
+			for (int i=0; i<RowCount; ++i) {
+				for (int j = 0; j < ColumnCount; ++j)
+					result.Append(State[i, j].ToString().PadLeft(width) + " ");
+				result.AppendLine();
+			}
+			return result.ToString();
 		}
 	}
 	public static class PuzzleUtility {
