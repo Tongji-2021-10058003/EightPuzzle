@@ -117,7 +117,10 @@ namespace EightPuzzle {
 			public ScoredNode(IComparer<ScoredNode> comparer, TState state, TCost cost = default, ScoredNode source = null, TCost score = default) : this(state, cost, source, score)
 				=> Comparer = comparer;
 			public int CompareTo(ScoredNode other) => Comparer == null ? Score.CompareTo(other.Score) : Comparer.Compare(this, other);
-			public new ScoredNode Parent { get; set; } = null;
+			public new ScoredNode Parent {
+				get => (this as Node).Parent as ScoredNode;
+				set => (this as Node).Parent = value;
+			}
 			public TCost Score { get; set; }
 			private IComparer<ScoredNode> Comparer { get; } = null;
 		}
