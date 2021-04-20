@@ -48,8 +48,8 @@ namespace EightPuzzle.Test {
 		public void Achievable() {
 			var src = new Puzzle(new int[,] { { 1, 2, 3 }, { 4, 5, 0 } });
 			var dst = src.MoveSelf(Direction.Left).MoveSelf(Direction.Left).MoveSelf(Direction.Up);
-			Assert.IsTrue(PuzzleUtility.Achievable(src, dst));
-			Assert.IsFalse(PuzzleUtility.Achievable(src, new Puzzle(new int[,] { { 1, 2, 3 }, { 5, 4, 0 } })));
+			Assert.IsTrue(PuzzleUtility.Reachable(src, dst));
+			Assert.IsFalse(PuzzleUtility.Reachable(src, new Puzzle(new int[,] { { 1, 2, 3 }, { 5, 4, 0 } })));
 		}
 	}
 }

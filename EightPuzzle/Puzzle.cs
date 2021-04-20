@@ -132,7 +132,7 @@ namespace EightPuzzle {
 			var temp = new int[array.Length];
 			return CountReversePairs(duplicate, ref temp);
 		}
-		public static bool? Achievable(Puzzle src, Puzzle dst) {
+		public static bool? Reachable(Puzzle src, Puzzle dst) {
 			if (src.RowCount != dst.RowCount || src.ColumnCount != dst.ColumnCount)
 				throw new ArgumentException("Two puzzles must be of the same size");
 			if ((src.ColumnCount & 1) == 0)
