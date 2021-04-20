@@ -49,8 +49,12 @@ namespace EightPuzzle {
 		static void Main() {
 			int rowCount = ReadInteger("Row count: ");
 			int colCount = ReadInteger("Column count: ");
-			Puzzle src = ReadPuzzle(rowCount, colCount, "Source puzzle: ");
-			Puzzle dst = ReadPuzzle(rowCount, colCount, "Destination puzzle: ");
+			Puzzle src = ReadPuzzle(rowCount, colCount, "Source puzzle:\n");
+			Puzzle dst = ReadPuzzle(rowCount, colCount, "Destination puzzle:\n");
+			if (PuzzleUtility.Reachable(src, dst) == false) {
+				Console.WriteLine("Not reachable");
+				return;
+			}
 			string funcName;
 			do {
 				Console.Write("Heuristic function: ");
