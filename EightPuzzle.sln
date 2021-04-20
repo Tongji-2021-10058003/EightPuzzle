@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EightPuzzle", "EightPuzzle\EightPuzzle.csproj", "{495246E3-A813-4FD1-84CE-1C7EEF93D1D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EightPuzzle.Test", "EightPuzzle.Test\EightPuzzle.Test.csproj", "{2E0A5DFA-5D9A-4BF5-A30A-B0D10E025014}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EightPuzzle.Test", "EightPuzzle.Test\EightPuzzle.Test.csproj", "{2E0A5DFA-5D9A-4BF5-A30A-B0D10E025014}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
