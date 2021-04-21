@@ -1,13 +1,12 @@
-﻿using System;
+﻿using Microsoft.Msagl.Drawing;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq;
 
 namespace EightPuzzle {
 	public class Program {
-		static int ReadInteger(string prompt = null) {
+		public static int ReadInteger(string prompt = null) {
 			int result;
 			do {
 				if (!string.IsNullOrEmpty(prompt))
@@ -16,7 +15,7 @@ namespace EightPuzzle {
 			while (!int.TryParse(Console.ReadLine(), out result));
 			return result;
 		}
-		static Puzzle ReadPuzzle(int row, int col, string prompt = null) {
+		public static Puzzle ReadPuzzle(int row, int col, string prompt = null) {
 			Puzzle result = null;
 			bool legal = true;
 			do {
@@ -46,7 +45,7 @@ namespace EightPuzzle {
 			while (!legal);
 			return result;
 		}
-		static void Main() {
+		public static void Main() {
 			int rowCount = ReadInteger("Row count: ");
 			int colCount = ReadInteger("Column count: ");
 			Puzzle src = ReadPuzzle(rowCount, colCount, "Source puzzle:\n");
@@ -69,10 +68,15 @@ namespace EightPuzzle {
 			var stateToIndex = new Dictionary<Puzzle, int>();
 			for (int i = 0; i < indexToNode.Length; ++i)
 				stateToIndex.Add(indexToNode[i].State, i);
-			graph.PaintPath(search.Path.Select(puzzle => stateToIndex[puzzle].ToString()), Microsoft.Msagl.Drawing.Color.Cyan);
+			graph.FindNode(stateToIndex[search.Source].ToString()).Attr.Color = Color.Red;
+			graph.FindNode(stateToIndex[search.Destination].ToString()).Attr.Color = Color.Yellow;
+			graph.PaintPath(search.Path.Select(puzzle => stateToIndex[puzzle].ToString()), Color.Cyan);
 			string fileName = "search states.jpg";
 			graph.RenderImage(fileName);
-			Process.Start(fileName);
+			Process.Start(new ProcessStartInfo() {
+				FileName = fileName,
+				UseShellExecute = true
+			});
 		}
 	}
 }
