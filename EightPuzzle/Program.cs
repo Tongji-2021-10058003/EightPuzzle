@@ -51,7 +51,15 @@ namespace EightPuzzle {
 			int colCount = ReadInteger("Column count: ");
 			Puzzle src = ReadPuzzle(rowCount, colCount, "Source puzzle:\n");
 			Puzzle dst = ReadPuzzle(rowCount, colCount, "Destination puzzle:\n");
-			if (PuzzleUtility.Reachable(src, dst) == false) {
+			bool? reachable;
+			try {
+				reachable = PuzzleUtility.Reachable(src, dst);
+			}
+			catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+				return;
+			}
+			if (reachable == false) {
 				Console.WriteLine("Not reachable");
 				return;
 			}
@@ -63,9 +71,13 @@ namespace EightPuzzle {
 			while (typeof(Evaluator).GetField(funcName) == null);
 			Search<Puzzle>.Evaluator estimate = (dynamic)(typeof(Evaluator).GetField(funcName).GetValue(null));
 			var search = new Search<Puzzle>(src, dst, PuzzleUtility.Transform);
-			int cost = search.AStar(estimate);
+			var cost = search.AStar(estimate);
+			if (!cost.HasValue) {
+				Console.WriteLine("Not reachable");
+				return;
+			}
 			Console.WriteLine($"Number of steps: {cost}");
-			var graph = search.SearchRoot.BuildSearchTree(out var indexToNode);
+			var graph = search.SearchSource.BuildSearchTree(out var indexToNode);
 			var stateToIndex = new Dictionary<Puzzle, int>();
 			for (int i = 0; i < indexToNode.Length; ++i)
 				stateToIndex.Add(indexToNode[i].State, i);
