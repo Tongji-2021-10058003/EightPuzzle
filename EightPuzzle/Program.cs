@@ -5,7 +5,15 @@ using System.Diagnostics;
 using System.Linq;
 
 namespace EightPuzzle {
+	/// <summary>
+	/// A console application that runs search algorhthm with an interactive CLI
+	/// </summary>
 	public class Program {
+		/// <summary>
+		/// Read an integer from console. The method will loop until the input is valid.
+		/// </summary>
+		/// <param name="prompt">An optional message to print before reading</param>
+		/// <returns></returns>
 		public static int ReadInteger(string prompt = null) {
 			int result;
 			do {
@@ -14,7 +22,13 @@ namespace EightPuzzle {
 			}
 			while (!int.TryParse(Console.ReadLine(), out result));
 			return result;
-		}
+		}/// <summary>
+		 /// Read the puzzle from console. The method will loop until the input is valid.
+		 /// </summary>
+		 /// <param name="row">Row count of the puzzle</param>
+		 /// <param name="col">Column count of the puzzle</param>
+		 /// <param name="prompt">An optional message to print before reading</param>
+		 /// <returns></returns>
 		public static Puzzle ReadPuzzle(int row, int col, string prompt = null) {
 			Puzzle result = null;
 			bool legal;
@@ -47,10 +61,13 @@ namespace EightPuzzle {
 			return result;
 		}
 		public static void Main() {
+			//Read from console
 			int rowCount = ReadInteger("Row count: ");
 			int colCount = ReadInteger("Column count: ");
 			Puzzle src = ReadPuzzle(rowCount, colCount, "Source puzzle:\n");
 			Puzzle dst = ReadPuzzle(rowCount, colCount, "Destination puzzle:\n");
+
+			//Check reachability before searching
 			bool? reachable;
 			try {
 				reachable = PuzzleUtility.Reachable(src, dst);
@@ -63,6 +80,8 @@ namespace EightPuzzle {
 				Console.WriteLine("Not reachable");
 				return;
 			}
+
+			//Read the heuristic function to be used. Function name must be presented in Evaluator class
 			string funcName;
 			do {
 				Console.Write("Heuristic function: ");
@@ -70,6 +89,8 @@ namespace EightPuzzle {
 			}
 			while (typeof(Evaluator).GetField(funcName) == null);
 			Search<Puzzle>.Evaluator estimate = (dynamic)(typeof(Evaluator).GetField(funcName).GetValue(null));
+
+			//Start searching
 			var search = new Search<Puzzle>(src, dst, PuzzleUtility.Transform);
 			var cost = search.AStar(estimate);
 			if (!cost.HasValue) {
@@ -77,6 +98,8 @@ namespace EightPuzzle {
 				return;
 			}
 			Console.WriteLine($"Number of steps: {cost}");
+
+			//Render the search tree to an image
 			var graph = search.SearchSource.BuildSearchTree(out var indexToNode);
 			var stateToIndex = new Dictionary<Puzzle, int>();
 			for (int i = 0; i < indexToNode.Length; ++i)

@@ -6,6 +6,10 @@ namespace EightPuzzle {
 		public TreeNode() : base() { }
 		public TreeNode(TreeNode parent) : base(parent) { }
 	}
+	/// <summary>
+	/// Base class of tree node
+	/// </summary>
+	/// <typeparam name="TNode">The actual type of node. Used to define relationship reference</typeparam>
 	public class TreeNodeBase<TNode> where TNode : TreeNodeBase<TNode> {
 		#region Fields
 		private TNode parent;
@@ -27,11 +31,20 @@ namespace EightPuzzle {
 		#endregion
 
 		#region Events
+		/// <summary>
+		/// Called before parent is changed. Everything remains unchanged.
+		/// </summary>
 		public event ValueChanging<TNode> ParentChanging = delegate { };
+		/// <summary>
+		/// Called after parent is changed. All related data are already updated.
+		/// </summary>
 		public event ValueChanged<TNode> ParentChanged = delegate { };
 		#endregion
 
 		#region Properties
+		/// <summary>
+		/// Parent of the node
+		/// </summary>
 		public TNode Parent {
 			get => parent;
 			set {
@@ -43,8 +56,17 @@ namespace EightPuzzle {
 				}
 			}
 		}
+		/// <summary>
+		/// Indicate whether this node is the root of the tree
+		/// </summary>
 		public bool IsRoot { get => parent == null; }
+		/// <summary>
+		/// Indicate whether this node is a leaf node
+		/// </summary>
 		public bool IsLeaf { get => Children.Count == 0; }
+		/// <summary>
+		/// The root of the tree
+		/// </summary>
 		public TNode Root {
 			get {
 				TNode root = this as TNode;
@@ -53,19 +75,31 @@ namespace EightPuzzle {
 				return root;
 			}
 		}
+		/// <summary>
+		/// Children of the node
+		/// </summary>
 		public List<TNode> Children { get; }
+		/// <summary>
+		/// Height of the subtree whose root is this node
+		/// </summary>
 		public int Height {
 			get {
 				UpdateHeightAndSize();
 				return height;
 			}
 		}
+		/// <summary>
+		/// Size of the subtree whose root is this node
+		/// </summary>
 		public int Size {
 			get {
 				UpdateHeightAndSize();
 				return size;
 			}
 		}
+		/// <summary>
+		/// Depth of the subtree whose root is this node
+		/// </summary>
 		public int Depth {
 			get {
 				UpdateDepth();
@@ -92,6 +126,10 @@ namespace EightPuzzle {
 		#endregion
 
 		#region Methods
+		/// <summary>
+		/// Calculate the latest common ancestor of two nodes
+		/// </summary>
+		/// <returns>Null if two nodes aren't in the same tree</returns>
 		public static TNode GetLatestCommonAncestor(TNode node1, TNode node2) {
 			if (node1.Depth > node2.Depth) {
 				var temp = node1;
@@ -106,6 +144,10 @@ namespace EightPuzzle {
 			}
 			return node1.Equals(node2) ? node1 : null;
 		}
+		/// <summary>
+		/// Called when parent is about to change. Will update the original parent and up-to-date flags after the event fires.
+		/// </summary>
+		/// <param name="e"></param>
 		public virtual void OnParentChanging(ValueChangingEventArg<TNode> e) {
 			ParentChanging(this, e);
 			if (parent != null) {
@@ -115,6 +157,10 @@ namespace EightPuzzle {
 			if (!(parent?.Depth == e.NewValue?.Depth))
 				DepthUpToDate = false;
 		}
+		/// <summary>
+		/// Called when parent has changed. Will update the new parent and up-to-date flags before the event fires.
+		/// </summary>
+		/// <param name="e"></param>
 		public virtual void OnParentChanged(ValueChangedEventArg<TNode> e) {
 			if (parent != null) {
 				parent.Children.Add(this as TNode);
@@ -122,18 +168,27 @@ namespace EightPuzzle {
 			}
 			ParentChanged(this, e);
 		}
+		/// <summary>
+		/// Check whether this node is the child of another node
+		/// </summary>
 		public bool IsChildOf(TNode node) {
 			var cur = Parent;
 			while (cur != null && !cur.Equals(node) && !cur.Equals(this))
 				cur = cur.Parent;
 			return node.Equals(cur);
 		}
+		/// <summary>
+		/// Check whether this node is the ancestor of another node
+		/// </summary>
 		public bool IsAncestorOf(TNode node) {
 			if (node == null)
 				return false;
 			else
 				return node.IsChildOf(this as TNode);
 		}
+		/// <summary>
+		/// Update height and size if out of date. Called in the getters of Height and Size.
+		/// </summary>
 		private void UpdateHeightAndSize() {
 			if (HeightUpToDate)
 				return;
@@ -146,6 +201,9 @@ namespace EightPuzzle {
 			}
 			HeightUpToDate = true;
 		}
+		/// <summary>
+		/// Update depth if out of date. Called in the getter of Depth
+		/// </summary>
 		private void UpdateDepth() {
 			if (DepthUpToDate)
 				return;
@@ -160,6 +218,10 @@ namespace EightPuzzle {
 		#endregion
 
 		#region Classes
+		/// <summary>
+		/// A class that preserves the arguments ValueChanging event
+		/// </summary>
+		/// <typeparam name="TValue">Type of the changing value</typeparam>
 		public class ValueChangingEventArg<TValue> : EventArgs {
 			public TValue OldValue;
 			public TValue NewValue;
@@ -168,6 +230,10 @@ namespace EightPuzzle {
 				NewValue = @new;
 			}
 		}
+		/// <summary>
+		/// A class that preserves the arguments ValueChanged event
+		/// </summary>
+		/// <typeparam name="TValue"></typeparam>
 		public class ValueChangedEventArg<TValue> : EventArgs {
 			public TValue NewValue;
 			public ValueChangedEventArg(TValue @new) {

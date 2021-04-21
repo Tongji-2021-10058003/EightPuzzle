@@ -1,6 +1,9 @@
 using System;
 
 namespace EightPuzzle {
+	/// <summary>
+	/// Some predefined heuristic functions
+	/// </summary>
 	public static class Evaluator {
 		private static int Square(int value) => value * value;
 		public static readonly Search<Puzzle>.Evaluator ManhattanDistance =

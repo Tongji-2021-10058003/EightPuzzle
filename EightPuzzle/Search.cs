@@ -6,6 +6,11 @@ using System.Linq;
 using Priority_Queue;
 
 namespace EightPuzzle {
+	/// <summary>
+	/// The container class that preserves the details during search process
+	/// </summary>
+	/// <typeparam name="TState">A type that presents the state</typeparam>
+	/// <typeparam name="TCost">A type that presents the cost of each step. Should support + and - operators</typeparam>
 	public class Search<TState, TCost> where TState : class, IEquatable<TState> where TCost : struct, IComparable<TCost> {
 		#region Constructors
 		public Search() => Path = new List<TState>();
@@ -28,22 +33,50 @@ namespace EightPuzzle {
 		#endregion
 
 		#region Properties
+		/// <summary>
+		/// Starting point of the search
+		/// </summary>
 		public TState Source { get; set; }
+		/// <summary>
+		/// Terminal point of the search
+		/// </summary>
 		public TState Destination { get; set; }
+		/// <summary>
+		/// A function that could check whether a state is the destination. Used in search with undefinite destinations
+		/// </summary>
 		public StateChecker CheckDestination { get; set; }
-		public Node SearchDestination { get; private set; }
+		/// <summary>
+		/// Search node of the source. Could be used to render a search tree.
+		/// </summary>
 		public Node SearchSource { get; private set; }
+		/// <summary>
+		/// Search node of the destination. Null if no paths were found.
+		/// </summary>
+		public Node SearchDestination { get; private set; }
+		/// <summary>
+		/// A function that presents the transforming action of each state
+		/// </summary>
 		public Transformer Transform { get; set; }
+		/// <summary>
+		/// Path found in the search process. Empty if not found.
+		/// </summary>
 		public List<TState> Path { get; init; }
 		#endregion
 		#region Methods
+		/// <summary>
+		/// A* search algorithm
+		/// </summary>
+		/// <param name="estimate">The heuristic function that estimate the cost from one state to the destination</param>
+		/// <returns>Cost of the path. Null if destination is not reached.</returns>
 		public TCost? AStar(Evaluator estimate) {
 			if (Destination == null)
 				throw new NullReferenceException("A* algorithm needs a definite destination for estimation");
 			SearchDestination = null;
 			Path.Clear();
 			var source = new HeuristicNode(Source, default);
+			//A hashset containing all nodes in both open list and close list
 			var visited = new HashSet<HeuristicNode>(new NodeEqualityComparer()) { source };
+			//A priority queue containing nodes in open list
 			var heap = new SimplePriorityQueue<HeuristicNode, TCost>();
 			heap.Enqueue(source, source.Total);
 			while (heap.Count > 0) {
@@ -52,8 +85,10 @@ namespace EightPuzzle {
 				foreach (var (next, cost) in Transform(node.State)) {
 					if (visited.TryGetValue(new HeuristicNode(next), out HeuristicNode nextNode)) {
 						TCost newCost = (dynamic)cost + node.Cost;
+						//Continue if the new cost is no less than the original one
 						if (newCost.CompareTo(nextNode.Cost) >= 0)
 							continue;
+						//If the new cost is less and the next node is the ancestor of current node, a negative cycle is detected, which will lead to endless loop and thus the process must be terminated
 						else if (nextNode.IsAncestorOf(node))
 							throw new Exception("Negative cycle detected");
 						else {
@@ -61,11 +96,14 @@ namespace EightPuzzle {
 							nextNode.Cost = newCost;
 							if (heap.Contains(nextNode))
 								heap.UpdatePriority(nextNode, nextNode.Total);
+							//Recursively update the subtree of the node
 							Update(nextNode, ref visited, ref heap);
 						}
 					}
 					else {
+						//Create a new node if neither open nor close list contains the next state
 						nextNode = new HeuristicNode(next, (dynamic)node.Cost + cost, node, estimate(next, Destination));
+						//Add the new node to open list
 						heap.Enqueue(nextNode, nextNode.Total);
 						visited.Add(nextNode);
 					}
@@ -75,6 +113,7 @@ namespace EightPuzzle {
 					break;
 			}
 			SearchSource = source;
+			//Look for the destination node
 			HeuristicNode destination = null;
 			if (Destination != null)
 				visited.TryGetValue(new HeuristicNode(Destination), out destination);
@@ -84,6 +123,7 @@ namespace EightPuzzle {
 				return null;
 
 			SearchDestination = destination;
+			//Calculate the path
 			for (HeuristicNode node = destination; node != null; node = node.Parent)
 				Path.Add(node.State);
 			Path.Reverse();
@@ -104,6 +144,9 @@ namespace EightPuzzle {
 		#endregion
 
 		#region Classes
+		/// <summary>
+		/// A node presents a state during search process.
+		/// </summary>
 		public class Node : TreeNodeBase<Node>, IEquatable<Node> {
 			public Node() : base() {
 				State = default;
@@ -124,7 +167,9 @@ namespace EightPuzzle {
 				return result.ToString();
 			}
 		}
-
+		/// <summary>
+		/// Node with estimation
+		/// </summary>
 		public class HeuristicNode : Node, IComparable<HeuristicNode> {
 			public HeuristicNode(IComparer<HeuristicNode> comparer = null) : base() {
 				Estimation = default;
@@ -148,7 +193,9 @@ namespace EightPuzzle {
 				return result.ToString();
 			}
 		}
-
+		/// <summary>
+		/// Node with score
+		/// </summary>
 		public class ScoredNode : Node, IComparable<ScoredNode> {
 			public ScoredNode(IComparer<ScoredNode> comparer = null) : base() {
 				Score = default;
@@ -171,7 +218,9 @@ namespace EightPuzzle {
 				return result.ToString();
 			}
 		}
-
+		/// <summary>
+		/// Comparer of nodes
+		/// </summary>
 		protected class NodeEqualityComparer : IEqualityComparer<Node> {
 			public bool Equals(Node x, Node y) => x.State.Equals(y.State);
 			public int GetHashCode([DisallowNull] Node obj) => obj.State.GetHashCode();

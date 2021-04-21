@@ -6,6 +6,9 @@ using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.GraphViewerGdi;
 
 namespace EightPuzzle {
+	/// <summary>
+	/// A static class that provides some extension methods for search tree visualization
+	/// </summary>
 	public static class Visualization {
 		private static int count = 0;
 		private static void BuildSearchTree<TState, TCost>(Search<TState, TCost>.Node searchNode, ref Node graphNode, ref Graph graph, ref Search<TState, TCost>.Node[] indexToNode) where TState : class, IEquatable<TState> where TCost : struct,IComparable<TCost> {
@@ -22,6 +25,14 @@ namespace EightPuzzle {
 			}
 			graph.AddNode(graphNode);
 		}
+		/// <summary>
+		/// Build the search tree from a root node
+		/// </summary>
+		/// <typeparam name="TState">State type of the search</typeparam>
+		/// <typeparam name="TCost">Cost type of the search</typeparam>
+		/// <param name="root">Source node of the search process</param>
+		/// <param name="indexToNode">An array that maps the index of the nodes in graph to the states in search</param>
+		/// <returns></returns>
 		public static Graph BuildSearchTree<TState, TCost>(this Search<TState, TCost>.Node root, out Search<TState, TCost>.Node[] indexToNode) where TState : class, IEquatable<TState> where TCost : struct,IComparable<TCost> {
 			count = 0;
 			indexToNode = new Search<TState, TCost>.Node[root.Size];
@@ -36,6 +47,13 @@ namespace EightPuzzle {
 		}
 		public static Graph BuildSearchTree<TState, TCost>(this Search<TState, TCost>.Node root) where TState : class, IEquatable<TState> where TCost : struct, IComparable<TCost>
 			=> root.BuildSearchTree(out _);
+		/// <summary>
+		/// Paint a path in the graph
+		/// </summary>
+		/// <param name="graph">The graph that contains the path</param>
+		/// <param name="path">The collection of the ids of the nodes on the path</param>
+		/// <param name="color">The color to be painted</param>
+		/// <exception cref="ArgumentException"></exception>
 		public static void PaintPath(this Graph graph, IEnumerable<string> path, Microsoft.Msagl.Drawing.Color color) {
 			var enumerator = path.GetEnumerator();
 			if (!enumerator.MoveNext())
@@ -60,6 +78,13 @@ namespace EightPuzzle {
 				srcNode = dstNode;
 			}
 		}
+		/// <summary>
+		/// Render the graph to an image
+		/// </summary>
+		/// <param name="graph">The graph to be rendered</param>
+		/// <param name="width">Width of the image. Will be calculated relatively if not provided</param>
+		/// <param name="height">Height of the image. Will be calculated relatively if not provided</param>
+		/// <returns>The rendered Bitmap</returns>
 		public static Bitmap RenderImage(this Graph graph, int width = -1, int height = -1) {
 			var renderer = new GraphRenderer(graph);
 			renderer.CalculateLayout();
@@ -79,7 +104,14 @@ namespace EightPuzzle {
 			renderer.Render(image);
 			return image;
 		}
-		public static void RenderImage(this Graph graph, string filename, int width = -1, int height = -1)
-			=> graph.RenderImage(width, height).Save(filename);
+		/// <summary>
+		/// Render the graph and save the result to a file
+		/// </summary>
+		/// <param name="graph">The graph to be rendered</param>
+		/// <param name="fileName">The path where the file will be saved</param>
+		/// <param name="width">Width of the image. Will be calculated relatively if not provided</param>
+		/// <param name="height">Height of the image. Will be calculated relatively if not provided</param>
+		public static void RenderImage(this Graph graph, string fileName, int width = -1, int height = -1)
+			=> graph.RenderImage(width, height).Save(fileName);
 	}
 }
