@@ -2,39 +2,45 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Linq;
 using Priority_Queue;
 
 namespace EightPuzzle {
-	public class Search<TState, TCost> where TState : class, IEquatable<TState> where TCost : IComparable<TCost> {
+	public class Search<TState, TCost> where TState : class, IEquatable<TState> where TCost : struct, IComparable<TCost> {
 		#region Constructors
-		public Search() {
-			Source = default;
-			Destination = default;
-			Path = new List<TState>();
-		}
-		public Search(TState src, TState dst, Transformer transform) {
+		public Search() => Path = new List<TState>();
+		public Search(TState src, TState dst, Transformer transform):this() {
 			Source = src;
 			Destination = dst;
 			Transform = transform;
-			Path = new List<TState>();
+		}
+		public Search(TState src, StateChecker checkDestination, Transformer transform) : this() {
+			Source = src;
+			CheckDestination = checkDestination;
+			Transform = transform;
 		}
 		#endregion
 
 		#region Delegates
 		public delegate IEnumerable<(TState Next, TCost Cost)> Transformer(TState state);
 		public delegate TCost Evaluator(TState src, TState dst);
+		public delegate bool StateChecker(TState state);
 		#endregion
 
 		#region Properties
 		public TState Source { get; set; }
 		public TState Destination { get; set; }
-		public Node SearchRoot { get; private set; }
+		public StateChecker CheckDestination { get; set; }
+		public Node SearchDestination { get; private set; }
+		public Node SearchSource { get; private set; }
 		public Transformer Transform { get; set; }
-		public List<TState> Path { get; }
+		public List<TState> Path { get; init; }
 		#endregion
-
 		#region Methods
-		public TCost AStar(Evaluator estimate) {
+		public TCost? AStar(Evaluator estimate) {
+			if (Destination == null)
+				throw new NullReferenceException("A* algorithm needs a definite destination for estimation");
+			SearchDestination = null;
 			Path.Clear();
 			var source = new HeuristicNode(Source, default);
 			var visited = new HashSet<HeuristicNode>(new NodeEqualityComparer()) { source };
@@ -64,14 +70,24 @@ namespace EightPuzzle {
 						visited.Add(nextNode);
 					}
 				}
-				if (visited.Contains(new HeuristicNode(Destination)))
+				if (visited.Contains(new HeuristicNode(Destination))
+					|| Destination == null && visited.Any(node=>CheckDestination(node.State)))
 					break;
 			}
-			visited.TryGetValue(new HeuristicNode(Destination), out HeuristicNode dstNode);
-			for (HeuristicNode node = dstNode; node != null; node = node.Parent)
-				Path.Insert(0, node.State);
-			SearchRoot = source;
-			return dstNode.Cost;
+			SearchSource = source;
+			HeuristicNode destination = null;
+			if (Destination != null)
+				visited.TryGetValue(new HeuristicNode(Destination), out destination);
+			else
+				destination = visited.FirstOrDefault(node => CheckDestination(node.State));
+			if (destination == null)
+				return null;
+
+			SearchDestination = destination;
+			for (HeuristicNode node = destination; node != null; node = node.Parent)
+				Path.Add(node.State);
+			Path.Reverse();
+			return destination.Cost;
 		}
 		private void Update(HeuristicNode node, ref HashSet<HeuristicNode> visited, ref SimplePriorityQueue<HeuristicNode, TCost> heap) {
 			foreach (var (next, cost) in Transform(node.State))
