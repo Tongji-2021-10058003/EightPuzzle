@@ -8,7 +8,7 @@ using Microsoft.Msagl.GraphViewerGdi;
 namespace EightPuzzle {
 	public static class Visualization {
 		private static int count = 0;
-		private static void BuildSearchTree<TState, TCost>(Search<TState, TCost>.Node searchNode, ref Node graphNode, ref Graph graph, ref Search<TState, TCost>.Node[] indexToNode) where TState : class, IEquatable<TState> where TCost : IComparable<TCost> {
+		private static void BuildSearchTree<TState, TCost>(Search<TState, TCost>.Node searchNode, ref Node graphNode, ref Graph graph, ref Search<TState, TCost>.Node[] indexToNode) where TState : class, IEquatable<TState> where TCost : struct,IComparable<TCost> {
 			foreach (var child in searchNode.Children) {
 				indexToNode[count] = child;
 				var node = new Node((count++).ToString()) {
@@ -22,7 +22,7 @@ namespace EightPuzzle {
 			}
 			graph.AddNode(graphNode);
 		}
-		public static Graph BuildSearchTree<TState, TCost>(this Search<TState, TCost>.Node root, out Search<TState, TCost>.Node[] indexToNode) where TState : class, IEquatable<TState> where TCost : IComparable<TCost> {
+		public static Graph BuildSearchTree<TState, TCost>(this Search<TState, TCost>.Node root, out Search<TState, TCost>.Node[] indexToNode) where TState : class, IEquatable<TState> where TCost : struct,IComparable<TCost> {
 			count = 0;
 			indexToNode = new Search<TState, TCost>.Node[root.Size];
 			indexToNode[count] = root;
@@ -34,7 +34,7 @@ namespace EightPuzzle {
 			count = 0;
 			return graph;
 		}
-		public static Graph BuildSearchTree<TState, TCost>(this Search<TState, TCost>.Node root) where TState : class, IEquatable<TState> where TCost : IComparable<TCost>
+		public static Graph BuildSearchTree<TState, TCost>(this Search<TState, TCost>.Node root) where TState : class, IEquatable<TState> where TCost : struct, IComparable<TCost>
 			=> root.BuildSearchTree(out _);
 		public static void PaintPath(this Graph graph, IEnumerable<string> path, Microsoft.Msagl.Drawing.Color color) {
 			var enumerator = path.GetEnumerator();
