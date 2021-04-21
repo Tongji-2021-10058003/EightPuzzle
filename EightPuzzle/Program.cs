@@ -104,11 +104,15 @@ namespace EightPuzzle {
 			var stateToIndex = new Dictionary<Puzzle, int>();
 			for (int i = 0; i < indexToNode.Length; ++i)
 				stateToIndex.Add(indexToNode[i].State, i);
+			graph.SetNodeAttribute(attr=> {
+				attr.Padding = 0.1;
+				attr.Color = Color.Black;
+			});
 			graph.FindNode(stateToIndex[search.Source].ToString()).Attr.Color = Color.Red;
 			graph.FindNode(stateToIndex[search.Destination].ToString()).Attr.Color = Color.Yellow;
 			graph.PaintPath(search.Path.Select(puzzle => stateToIndex[puzzle].ToString()), Color.Cyan);
 			string fileName = "search states.jpg";
-			graph.RenderImage(fileName);
+			graph.RenderImage(fileName, height: search.SearchSource.Height * 40 * (rowCount + 2));
 			Process.Start(new ProcessStartInfo() {
 				FileName = fileName,
 				UseShellExecute = true
