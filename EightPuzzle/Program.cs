@@ -17,8 +17,9 @@ namespace EightPuzzle {
 		}
 		public static Puzzle ReadPuzzle(int row, int col, string prompt = null) {
 			Puzzle result = null;
-			bool legal = true;
+			bool legal;
 			do {
+				legal = true;
 				if (!string.IsNullOrEmpty(prompt))
 					Console.Write(prompt);
 				int[,] state = new int[row, col];
