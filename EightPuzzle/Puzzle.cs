@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace EightPuzzle {
 	public enum Direction {
@@ -11,6 +10,7 @@ namespace EightPuzzle {
 		Left = 2,
 		Right = 3
 	};
+
 	public class Puzzle : IEquatable<Puzzle> {
 		public int[,] State;
 		public Puzzle(Puzzle puzzle) {
@@ -111,7 +111,7 @@ namespace EightPuzzle {
 		public override string ToString() {
 			var result = new StringBuilder();
 			int width = (int)Math.Floor(Math.Log10(State.Cast<int>().Max())) + 1;
-			for (int i=0; i<RowCount; ++i) {
+			for (int i = 0; i < RowCount; ++i) {
 				for (int j = 0; j < ColumnCount; ++j)
 					result.Append(State[i, j].ToString().PadLeft(width) + " ");
 				result.AppendLine();
@@ -119,6 +119,7 @@ namespace EightPuzzle {
 			return result.ToString();
 		}
 	}
+
 	public static class PuzzleUtility {
 		private static int CountReversePairs(ArraySegment<int> seg, ref int[] temp) {
 			if (seg.Count == 1)
