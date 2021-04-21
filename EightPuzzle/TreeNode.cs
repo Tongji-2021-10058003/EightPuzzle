@@ -35,7 +35,8 @@ namespace EightPuzzle {
 		public TNode Parent {
 			get => parent;
 			set {
-				if (parent?.Equals(value) != true) {
+				if (parent != null && !parent.Equals(value)
+					|| parent == null && value != null) {
 					OnParentChanging(new ValueChangingEventArg<TNode>(parent, value));
 					parent = value;
 					OnParentChanged(new ValueChangedEventArg<TNode>(parent));
