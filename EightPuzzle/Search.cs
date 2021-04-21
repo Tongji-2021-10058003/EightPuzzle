@@ -99,6 +99,8 @@ namespace EightPuzzle {
 				Cost = cost;
 			}
 			public bool Equals(Node other) => State.Equals(other.State);
+			public override bool Equals(object obj) => obj is Node && Equals(obj as Node);
+			public override int GetHashCode() => State.GetHashCode();
 			public TState State { get; set; }
 			public TCost Cost { get; set; }
 		}
