@@ -51,6 +51,16 @@ namespace EightPuzzle {
 				return equal;
 			}
 		}
+		public override bool Equals(object obj) => obj is Puzzle && Equals(obj as Puzzle);
+
+		public override int GetHashCode() {
+			int radix = RowCount * ColumnCount;
+			int hash = unchecked(RowCount * radix + ColumnCount);
+			for (int i = 0; i < RowCount; ++i)
+				for (int j = 0; j < ColumnCount; ++j)
+					hash = unchecked(hash * radix + State[i, j]);
+			return hash;
+		}
 		public (int Row, int Column) Slot {
 			get;
 			private set;
