@@ -12,9 +12,11 @@ namespace EightPuzzle {
 			foreach (var child in searchNode.Children) {
 				indexToNode[count] = child;
 				var node = new Node((count++).ToString()) {
-					LabelText = child.State.ToString()
+					LabelText = child.ToString()
 				};
-				var edge = new Edge(graphNode, node, ConnectionToGraph.Connected);
+				var edge = new Edge(graphNode, node, ConnectionToGraph.Connected) {
+					LabelText = ((dynamic)child.Cost - searchNode.Cost).ToString()
+				};
 				graphNode.AddOutEdge(edge);
 				BuildSearchTree(child, ref node, ref graph, ref indexToNode);
 			}
@@ -25,7 +27,7 @@ namespace EightPuzzle {
 			indexToNode = new Search<TState, TCost>.Node[root.Size];
 			indexToNode[count] = root;
 			var gNode = new Node((count++).ToString()) {
-				LabelText = root.State.ToString()
+				LabelText = root.ToString()
 			};
 			var graph = new Graph();
 			BuildSearchTree(root, ref gNode, ref graph, ref indexToNode);
@@ -62,7 +64,7 @@ namespace EightPuzzle {
 			var renderer = new GraphRenderer(graph);
 			renderer.CalculateLayout();
 			if (width == -1 && height == -1)
-				width = (int)(Math.Sqrt(graph.NodeCount)) * 50;
+				width = (int)(Math.Sqrt(graph.NodeCount)) * 150;
 			else if (width != -1 && height != -1) {
 				if (width / height > graph.Width / graph.Height)
 					height = -1;
