@@ -36,12 +36,14 @@ namespace EightPuzzle {
 			=> root.BuildSearchTree(out _);
 		public static void PaintPath(this Graph graph, IEnumerable<string> path, Microsoft.Msagl.Drawing.Color color) {
 			var enumerator = path.GetEnumerator();
+			if (!enumerator.MoveNext())
+				return;
 			var srcId = enumerator.Current;
-			string dstId;
-			var srcNode = graph.FindNode(enumerator.Current);
-			Node dstNode;
+			var srcNode = graph.FindNode(srcId);
 			if (srcNode == null)
 				throw new ArgumentException($"Id \"{srcId}\" doesn't exist in graph");
+			string dstId;
+			Node dstNode;
 			while (enumerator.MoveNext()) {
 				dstId = enumerator.Current;
 				dstNode = graph.FindNode(dstId);
