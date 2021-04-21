@@ -26,7 +26,7 @@ namespace EightPuzzle {
 				for (int i = 0; legal && i < row; ++i) {
 					string line = Console.ReadLine();
 					string[] strs = line.Split(' ');
-					if (strs.Length != 3)
+					if (strs.Length != col)
 						legal = false;
 					else {
 						for (int j = 0; legal && j < col; ++j)
