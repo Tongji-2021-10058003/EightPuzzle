@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using Priority_Queue;
 
 namespace EightPuzzle {
@@ -35,15 +36,15 @@ namespace EightPuzzle {
 		#region Methods
 		public TCost AStar(Evaluator estimate) {
 			Path.Clear();
-			var source = new ScoredNode(Source, default);
-			var visited = new HashSet<ScoredNode>(new NodeEqualityComparer()) { source };
-			var heap = new SimplePriorityQueue<ScoredNode, TCost>();
-			heap.Enqueue(source, source.Score);
+			var source = new HeuristicNode(Source, default);
+			var visited = new HashSet<HeuristicNode>(new NodeEqualityComparer()) { source };
+			var heap = new SimplePriorityQueue<HeuristicNode, TCost>();
+			heap.Enqueue(source, source.Total);
 			while (heap.Count > 0) {
 				var node = heap.First;
 				heap.Dequeue();
 				foreach (var (next, cost) in Transform(node.State)) {
-					if (visited.TryGetValue(new ScoredNode(next), out ScoredNode nextNode)) {
+					if (visited.TryGetValue(new HeuristicNode(next), out HeuristicNode nextNode)) {
 						TCost newCost = (dynamic)cost + node.Cost;
 						if (newCost.CompareTo(nextNode.Cost) >= 0)
 							continue;
@@ -51,38 +52,36 @@ namespace EightPuzzle {
 							throw new Exception("Negative cycle detected");
 						else {
 							nextNode.Parent = node;
-							nextNode.Score += (dynamic)newCost - nextNode.Cost;
-							if (heap.Contains(nextNode))
-								heap.UpdatePriority(nextNode, nextNode.Score);
 							nextNode.Cost = newCost;
+							if (heap.Contains(nextNode))
+								heap.UpdatePriority(nextNode, nextNode.Total);
 							Update(nextNode, ref visited, ref heap);
 						}
 					}
 					else {
-						nextNode = new ScoredNode(next, (dynamic)node.Cost + cost, node, estimate(next, Destination));
-						heap.Enqueue(nextNode, nextNode.Score);
+						nextNode = new HeuristicNode(next, (dynamic)node.Cost + cost, node, estimate(next, Destination));
+						heap.Enqueue(nextNode, nextNode.Total);
 						visited.Add(nextNode);
 					}
 				}
-				if (visited.Contains(new ScoredNode(Destination)))
+				if (visited.Contains(new HeuristicNode(Destination)))
 					break;
 			}
-			visited.TryGetValue(new ScoredNode(Destination), out ScoredNode dstNode);
-			for (ScoredNode node = dstNode; node != null; node = node.Parent)
+			visited.TryGetValue(new HeuristicNode(Destination), out HeuristicNode dstNode);
+			for (HeuristicNode node = dstNode; node != null; node = node.Parent)
 				Path.Insert(0, node.State);
 			SearchRoot = source;
 			return dstNode.Cost;
 		}
-		private void Update(ScoredNode node, ref HashSet<ScoredNode> visited, ref SimplePriorityQueue<ScoredNode, TCost> heap) {
+		private void Update(HeuristicNode node, ref HashSet<HeuristicNode> visited, ref SimplePriorityQueue<HeuristicNode, TCost> heap) {
 			foreach (var (next, cost) in Transform(node.State))
-				if (visited.TryGetValue(new ScoredNode(next), out ScoredNode nextNode) && nextNode.Parent.Equals(node)) {
+				if (visited.TryGetValue(new HeuristicNode(next), out HeuristicNode nextNode) && nextNode.Parent.Equals(node)) {
 					TCost newCost = (dynamic)cost + node.Cost;
 					if (newCost.CompareTo(nextNode.Cost) >= 0)
 						continue;
-					nextNode.Score += (dynamic)newCost - nextNode.Cost;
-					if (heap.Contains(nextNode))
-						heap.UpdatePriority(nextNode, nextNode.Score);
 					nextNode.Cost = newCost;
+					if (heap.Contains(nextNode))
+						heap.UpdatePriority(nextNode, nextNode.Total);
 					Update(nextNode, ref visited, ref heap);
 				}
 		}
@@ -99,10 +98,39 @@ namespace EightPuzzle {
 				Cost = cost;
 			}
 			public bool Equals(Node other) => State.Equals(other.State);
-			public override bool Equals(object obj) => obj is Node && Equals(obj as Node);
-			public override int GetHashCode() => State.GetHashCode();
 			public TState State { get; set; }
 			public TCost Cost { get; set; }
+			public override bool Equals(object obj) => obj is Node && Equals(obj as Node);
+			public override int GetHashCode() => State.GetHashCode();
+			public override string ToString() {
+				var result = new StringBuilder(State.ToString());
+				result.AppendLine($"Cost: {Cost}");
+				return result.ToString();
+			}
+		}
+
+		public class HeuristicNode : Node, IComparable<HeuristicNode> {
+			public HeuristicNode(IComparer<HeuristicNode> comparer = null) : base() {
+				Estimation = default;
+				Comparer = comparer;
+			}
+			public HeuristicNode(TState state, TCost cost = default, HeuristicNode parent = null, TCost estimation = default) : base(state, cost, parent)
+				=> Estimation = estimation;
+			public HeuristicNode(IComparer<HeuristicNode> comparer, TState state, TCost cost = default, HeuristicNode source = null, TCost estimation = default) : this(state, cost, source, estimation)
+				=> Comparer = comparer;
+			public int CompareTo(HeuristicNode other) => Comparer == null ? Total.CompareTo(other.Total) : Comparer.Compare(this, other);
+			public new HeuristicNode Parent {
+				get => (this as Node).Parent as HeuristicNode;
+				set => (this as Node).Parent = value;
+			}
+			public TCost Estimation { get; set; }
+			public TCost Total { get => (dynamic)Cost + Estimation; }
+			private IComparer<HeuristicNode> Comparer { get; } = null;
+			public override string ToString() {
+				var result = new StringBuilder(base.ToString());
+				result.AppendLine($"Estm: {Estimation}");
+				return result.ToString();
+			}
 		}
 
 		public class ScoredNode : Node, IComparable<ScoredNode> {
@@ -110,12 +138,8 @@ namespace EightPuzzle {
 				Score = default;
 				Comparer = comparer;
 			}
-			public ScoredNode(TState state, TCost cost = default, ScoredNode parent = null, TCost score = default) {
-				State = state;
-				Cost = cost;
-				Parent = parent;
-				Score = score;
-			}
+			public ScoredNode(TState state, TCost cost = default, ScoredNode parent = null, TCost score = default) : base(state, cost, parent)
+				=> Score = score;
 			public ScoredNode(IComparer<ScoredNode> comparer, TState state, TCost cost = default, ScoredNode source = null, TCost score = default) : this(state, cost, source, score)
 				=> Comparer = comparer;
 			public int CompareTo(ScoredNode other) => Comparer == null ? Score.CompareTo(other.Score) : Comparer.Compare(this, other);
@@ -125,6 +149,11 @@ namespace EightPuzzle {
 			}
 			public TCost Score { get; set; }
 			private IComparer<ScoredNode> Comparer { get; } = null;
+			public override string ToString() {
+				var result = new StringBuilder(base.ToString());
+				result.AppendLine($"Score: {Score}");
+				return result.ToString();
+			}
 		}
 
 		protected class NodeEqualityComparer : IEqualityComparer<Node> {
