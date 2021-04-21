@@ -48,6 +48,39 @@ namespace EightPuzzle {
 		public static Graph BuildSearchTree<TState, TCost>(this Search<TState, TCost>.Node root) where TState : class, IEquatable<TState> where TCost : struct, IComparable<TCost>
 			=> root.BuildSearchTree(out _);
 		/// <summary>
+		/// Set the attributes of the nodes in the graph
+		/// </summary>
+		/// <param name="attribute">Attribute to be set on all nodes in the graph</param>
+		public static void SetNodeAttribute(this Graph graph, NodeAttr attribute) {
+			foreach (var node in graph.Nodes)
+				node.Attr = attribute.Clone();
+		}
+		/// <summary>
+		/// Set the attributes of the nodes in the graph
+		/// </summary>
+		/// <param name="setAttribute">An action that will be applied on the attribute of each node</param>
+		public static void SetNodeAttribute(this Graph graph, Action<NodeAttr> setAttribute) {
+			foreach (var node in graph.Nodes)
+				setAttribute(node.Attr);
+		}
+		/// <summary>
+		/// Set the attributes of the edges in the graph
+		/// </summary>
+		/// <param name="attribute">Attribute to be set on all edges in the graph</param>
+		public static void SetEdgeAttribute(this Graph graph, EdgeAttr attribute) {
+			foreach (var edge in graph.Edges)
+				edge.Attr = attribute.Clone();
+		}
+		/// <summary>
+		/// Set the attributes of the edges in the graph
+		/// </summary>
+		/// <param name="graph"></param>
+		/// <param name="setAttribute">An action that will be applied on the attribute of each edge</param>
+		public static void SetEdgeAttribute(this Graph graph, Action<EdgeAttr> setAttribute) {
+			foreach (var edge in graph.Edges)
+				setAttribute(edge.Attr);
+		}
+		/// <summary>
 		/// Paint a path in the graph
 		/// </summary>
 		/// <param name="graph">The graph that contains the path</param>
