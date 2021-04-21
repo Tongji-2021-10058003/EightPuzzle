@@ -146,6 +146,8 @@ namespace EightPuzzle {
 		public static bool? Reachable(Puzzle src, Puzzle dst) {
 			if (src.RowCount != dst.RowCount || src.ColumnCount != dst.ColumnCount)
 				throw new ArgumentException("Two puzzles must be of the same size");
+			else if (!Enumerable.SequenceEqual(src.State.Cast<int>().OrderBy(x => x), dst.State.Cast<int>().OrderBy(x => x)))
+				throw new ArgumentException("Two puzzles contain different elements");
 			if ((src.ColumnCount & 1) == 0)
 				return null;
 			var srcArr = src.ToArray();
